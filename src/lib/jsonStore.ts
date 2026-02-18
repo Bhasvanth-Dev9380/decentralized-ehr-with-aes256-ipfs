@@ -8,14 +8,6 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-
-function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-}
-
 function generateId(): string {
   return crypto.randomBytes(12).toString("hex");
 }
@@ -351,14 +343,27 @@ class QueryBuilder {
 /* ━━━━━━━━━━━━━  JsonCollection  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 export class JsonCollection {
-  private filePath: string;
+  private _filePath: string | null = null;
+  private collectionName: string;
 
-  constructor(private collectionName: string) {
-    ensureDataDir();
-    this.filePath = path.join(DATA_DIR, `${collectionName}.json`);
-    if (!fs.existsSync(this.filePath)) {
-      fs.writeFileSync(this.filePath, "[]", "utf-8");
+  constructor(collectionName: string) {
+    this.collectionName = collectionName;
+    // Defer all file I/O to first use (Next.js build imports modules statically)
+  }
+
+  /** Lazily resolve the file path and create the file if needed */
+  private get filePath(): string {
+    if (!this._filePath) {
+      const dataDir = path.join(process.cwd(), "data");
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      this._filePath = path.join(dataDir, `${this.collectionName}.json`);
+      if (!fs.existsSync(this._filePath)) {
+        fs.writeFileSync(this._filePath, "[]", "utf-8");
+      }
     }
+    return this._filePath;
   }
 
   /* ── internal I/O ── */
@@ -373,7 +378,7 @@ export class JsonCollection {
   }
 
   _writeAll(docs: any[]): void {
-    ensureDataDir();
+    // filePath getter ensures the data dir exists
     fs.writeFileSync(this.filePath, JSON.stringify(docs, null, 2), "utf-8");
   }
 
