@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import { getAuthUser } from "@/lib/auth";
+import { generateKeyPair, getKeyFingerprint } from "@/lib/proxyReEncryption";
 
 function generateId(prefix: string): string {
   const num = Math.floor(100000 + Math.random() * 900000);
@@ -43,12 +44,17 @@ export async function POST(req: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    // Generate RSA-2048 keypair for Proxy Re-Encryption
+    const { publicKey, privateKey } = generateKeyPair();
+
     const userData: any = {
       name,
       email,
       password: hashedPassword,
       role,
       phone,
+      publicKey,
+      privateKey,
     };
 
     if (role === "patient") {
@@ -70,6 +76,7 @@ export async function POST(req: NextRequest) {
         patientId: user.patientId,
         doctorId: user.doctorId,
         specialization: user.specialization,
+        publicKeyFingerprint: getKeyFingerprint(publicKey),
       },
     }, { status: 201 });
   } catch (error: any) {

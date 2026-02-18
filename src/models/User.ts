@@ -9,6 +9,8 @@ export interface IUser extends Document {
   doctorId?: string;
   specialization?: string;
   phone?: string;
+  publicKey?: string;
+  privateKey?: string;
   createdAt: Date;
 }
 
@@ -26,6 +28,9 @@ const UserSchema = new Schema<IUser>(
     doctorId: { type: String, unique: true, sparse: true },
     specialization: { type: String },
     phone: { type: String },
+    // RSA-2048 keypair for Proxy Re-Encryption
+    publicKey: { type: String },   // PEM-encoded RSA public key
+    privateKey: { type: String },  // PEM-encoded RSA private key
   },
   { timestamps: true }
 );

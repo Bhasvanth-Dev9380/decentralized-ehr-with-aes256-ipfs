@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import AccessPermission from "@/models/AccessPermission";
 import { getAuthUser } from "@/lib/auth";
+import { generateReEncryptionKey, getKeyFingerprint } from "@/lib/proxyReEncryption";
 
 // Grant or revoke access to a doctor
 export async function POST(req: NextRequest) {
@@ -32,16 +33,39 @@ export async function POST(req: NextRequest) {
     }
 
     if (grant) {
+      // Generate Proxy Re-Encryption key for this patient→doctor delegation
+      let reEncryptionKey = "";
+      if (patient.publicKey && patient.privateKey && doctor.publicKey) {
+        reEncryptionKey = generateReEncryptionKey(
+          patient.privateKey,
+          patient.publicKey,
+          doctor.publicKey
+        );
+      }
+
       await AccessPermission.findOneAndUpdate(
         { patientId: patient.patientId, doctorId },
-        { granted: true, grantedAt: new Date(), $unset: { revokedAt: 1 } },
+        {
+          granted: true,
+          grantedAt: new Date(),
+          reEncryptionKey,
+          $unset: { revokedAt: 1 },
+        },
         { upsert: true, new: true }
       );
-      return NextResponse.json({ message: `Access granted to Dr. ${doctor.name}` });
+      return NextResponse.json({
+        message: `Access granted to Dr. ${doctor.name}`,
+        preEnabled: !!reEncryptionKey,
+      });
     } else {
+      // Revoke: clear the re-encryption key (forward secrecy)
       await AccessPermission.findOneAndUpdate(
         { patientId: patient.patientId, doctorId },
-        { granted: false, revokedAt: new Date() },
+        {
+          granted: false,
+          revokedAt: new Date(),
+          reEncryptionKey: "", // Destroy re-encryption key on revocation
+        },
         { upsert: true, new: true }
       );
       return NextResponse.json({ message: `Access revoked for Dr. ${doctor.name}` });
@@ -74,7 +98,7 @@ export async function GET(req: NextRequest) {
     // Enrich with doctor names
     const enriched = await Promise.all(
       permissions.map(async (p) => {
-        const doctor = await User.findOne({ doctorId: p.doctorId }).select("name specialization");
+        const doctor = await User.findOne({ doctorId: p.doctorId }).select("name specialization publicKey");
         return {
           doctorId: p.doctorId,
           doctorName: doctor?.name || "Unknown",
@@ -82,6 +106,7 @@ export async function GET(req: NextRequest) {
           granted: p.granted,
           grantedAt: p.grantedAt,
           revokedAt: p.revokedAt,
+          preEnabled: !!(p.reEncryptionKey && p.granted),
         };
       })
     );

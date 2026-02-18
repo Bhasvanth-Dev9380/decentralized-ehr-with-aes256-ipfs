@@ -10,7 +10,30 @@ import {
   FiUsers,
   FiFile,
   FiCheckCircle,
+  FiBarChart2,
 } from "react-icons/fi";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+} from "recharts";
 
 interface User {
   _id: string;
@@ -23,13 +46,47 @@ interface User {
   phone?: string;
 }
 
+interface AnalyticsData {
+  encryption: {
+    total: number;
+    pre: number;
+    legacy: number;
+    timeline: { month: string; PRE: number; Legacy: number; totalSize: number }[];
+    fileSizeDistribution: { name: string; count: number }[];
+  };
+  decryption: {
+    totalAttempts: number;
+    granted: number;
+    denied: number;
+    timeline: { month: string; Granted: number; Denied: number }[];
+  };
+  accuracy: {
+    encryptionAccuracy: number;
+    decryptionSuccessRate: number;
+    keyDistributionRate: number;
+    preAdoptionRate: number;
+    radarData: { metric: string; value: number }[];
+  };
+  summary: {
+    totalUsers: number;
+    usersWithKeys: number;
+    totalRecords: number;
+    totalPermissions: number;
+    activePermissions: number;
+  };
+}
+
+const PIE_COLORS = ["#8b5cf6", "#06b6d4", "#f59e0b", "#10b981", "#ef4444", "#6366f1"];
+
 export default function ReceptionistDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<"register" | "upload" | "users">(
+  const [activeTab, setActiveTab] = useState<"register" | "upload" | "users" | "analytics">(
     "register"
   );
   const [users, setUsers] = useState<User[]>([]);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   // Register form
   const [registerForm, setRegisterForm] = useState({
@@ -69,7 +126,20 @@ export default function ReceptionistDashboard() {
 
   useEffect(() => {
     if (activeTab === "users") fetchUsers();
+    if (activeTab === "analytics") fetchAnalytics();
   }, [activeTab]);
+
+  const fetchAnalytics = async () => {
+    setAnalyticsLoading(true);
+    try {
+      const res = await fetch("/api/receptionist/analytics");
+      const data = await res.json();
+      if (res.ok) setAnalytics(data);
+    } catch {
+      toast.error("Failed to load analytics");
+    }
+    setAnalyticsLoading(false);
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,6 +223,7 @@ export default function ReceptionistDashboard() {
             { id: "register" as const, label: "Register User", icon: FiUserPlus },
             { id: "upload" as const, label: "Upload Records", icon: FiUpload },
             { id: "users" as const, label: "View Users", icon: FiUsers },
+            { id: "analytics" as const, label: "Analytics", icon: FiBarChart2 },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -313,9 +384,10 @@ export default function ReceptionistDashboard() {
                 />
               </div>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
-                <strong>Security:</strong> File will be encrypted with AES-256
-                before uploading to IPFS. The file hash will be stored on the
-                BigchainDB blockchain.
+                <strong>Security:</strong> File will be encrypted with a unique
+                AES-256 key. The AES key is then encapsulated using the
+                patient&apos;s RSA-2048 public key via Proxy Re-Encryption (PRE).
+                The encrypted file is stored on IPFS and its hash recorded on BigchainDB.
               </div>
               <button
                 type="submit"
@@ -324,7 +396,7 @@ export default function ReceptionistDashboard() {
               >
                 {uploadLoading
                   ? "Encrypting & Uploading..."
-                  : "Encrypt & Upload to Blockchain"}
+                  : "Encrypt (AES+PRE) & Upload"}
               </button>
             </form>
 
@@ -337,6 +409,12 @@ export default function ReceptionistDashboard() {
                 <div className="mt-2 text-sm text-green-700 space-y-1">
                   <p>
                     <strong>File:</strong> {uploadResult.fileName}
+                  </p>
+                  <p>
+                    <strong>Encryption:</strong>{" "}
+                    <span className="bg-green-100 px-1 rounded text-xs font-semibold">
+                      AES-256 + PRE (RSA-2048)
+                    </span>
                   </p>
                   <p>
                     <strong>IPFS Hash:</strong>{" "}
@@ -409,6 +487,188 @@ export default function ReceptionistDashboard() {
                   </tbody>
                 </table>
               </div>
+            )}
+          </div>
+        )}
+
+        {/* Analytics Tab */}
+        {activeTab === "analytics" && (
+          <div className="space-y-6">
+            {analyticsLoading ? (
+              <div className="text-center py-16 text-gray-500">Loading analytics...</div>
+            ) : !analytics ? (
+              <div className="text-center py-16 text-gray-500">No data available.</div>
+            ) : (
+              <>
+                {/* Summary Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[
+                    { label: "Total Records", value: analytics.summary.totalRecords, color: "bg-purple-50 text-purple-700 border-purple-200" },
+                    { label: "PRE Encrypted", value: analytics.encryption.pre, color: "bg-blue-50 text-blue-700 border-blue-200" },
+                    { label: "Access Attempts", value: analytics.decryption.totalAttempts, color: "bg-amber-50 text-amber-700 border-amber-200" },
+                    { label: "Decryption Success", value: `${analytics.accuracy.decryptionSuccessRate}%`, color: "bg-green-50 text-green-700 border-green-200" },
+                  ].map((card, i) => (
+                    <div key={i} className={`border rounded-xl p-4 ${card.color}`}>
+                      <p className="text-xs font-medium uppercase opacity-75">{card.label}</p>
+                      <p className="text-2xl font-bold mt-1">{card.value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Row 1: Encryption Timeline + Encryption Type Pie */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-6">
+                    <h3 className="text-base font-semibold mb-4">Encryption Timeline (Last 6 Months)</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={analytics.encryption.timeline}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="PRE" fill="#8b5cf6" name="PRE (AES+RSA)" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="Legacy" fill="#06b6d4" name="Legacy AES" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="bg-white rounded-xl shadow-sm p-6">
+                    <h3 className="text-base font-semibold mb-4">Encryption Type Distribution</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: "PRE (AES+RSA)", value: analytics.encryption.pre || 0 },
+                            { name: "Legacy AES", value: analytics.encryption.legacy || 0 },
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={55}
+                          outerRadius={90}
+                          paddingAngle={5}
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                        >
+                          <Cell fill="#8b5cf6" />
+                          <Cell fill="#06b6d4" />
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Row 2: Decryption (Access) Timeline + Access Outcome Pie */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-6">
+                    <h3 className="text-base font-semibold mb-4">Decryption Access Timeline (Last 6 Months)</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <AreaChart data={analytics.decryption.timeline}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip />
+                        <Legend />
+                        <Area type="monotone" dataKey="Granted" stroke="#10b981" fill="#d1fae5" name="Granted (Decrypted)" />
+                        <Area type="monotone" dataKey="Denied" stroke="#ef4444" fill="#fee2e2" name="Denied" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="bg-white rounded-xl shadow-sm p-6">
+                    <h3 className="text-base font-semibold mb-4">Access Outcomes</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: "Granted", value: analytics.decryption.granted || 0 },
+                            { name: "Denied", value: analytics.decryption.denied || 0 },
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={55}
+                          outerRadius={90}
+                          paddingAngle={5}
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                        >
+                          <Cell fill="#10b981" />
+                          <Cell fill="#ef4444" />
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Row 3: Accuracy Radar + Accuracy Bars */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-xl shadow-sm p-6">
+                    <h3 className="text-base font-semibold mb-4">System Accuracy Radar</h3>
+                    <ResponsiveContainer width="100%" height={320}>
+                      <RadarChart data={analytics.accuracy.radarData}>
+                        <PolarGrid />
+                        <PolarAngleAxis dataKey="metric" tick={{ fontSize: 11 }} />
+                        <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 10 }} />
+                        <Radar
+                          name="Accuracy %"
+                          dataKey="value"
+                          stroke="#8b5cf6"
+                          fill="#8b5cf6"
+                          fillOpacity={0.3}
+                        />
+                        <Tooltip formatter={(val: any) => `${Number(val).toFixed(1)}%`} />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="bg-white rounded-xl shadow-sm p-6">
+                    <h3 className="text-base font-semibold mb-4">Accuracy Metrics Breakdown</h3>
+                    <ResponsiveContainer width="100%" height={320}>
+                      <BarChart
+                        data={[
+                          { metric: "PRE Encryption", value: analytics.accuracy.encryptionAccuracy },
+                          { metric: "Decrypt Success", value: analytics.accuracy.decryptionSuccessRate },
+                          { metric: "Key Distribution", value: analytics.accuracy.keyDistributionRate },
+                          { metric: "PRE Adoption", value: analytics.accuracy.preAdoptionRate },
+                        ]}
+                        layout="vertical"
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" domain={[0, 100]} unit="%" />
+                        <YAxis dataKey="metric" type="category" width={120} tick={{ fontSize: 12 }} />
+                        <Tooltip formatter={(val: any) => `${Number(val).toFixed(1)}%`} />
+                        <Bar dataKey="value" name="Accuracy %" radius={[0, 6, 6, 0]}>
+                          {[
+                            { metric: "PRE Encryption", value: analytics.accuracy.encryptionAccuracy },
+                            { metric: "Decrypt Success", value: analytics.accuracy.decryptionSuccessRate },
+                            { metric: "Key Distribution", value: analytics.accuracy.keyDistributionRate },
+                            { metric: "PRE Adoption", value: analytics.accuracy.preAdoptionRate },
+                          ].map((_, i) => (
+                            <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Row 4: File Size Distribution */}
+                {analytics.encryption.fileSizeDistribution.length > 0 && (
+                  <div className="bg-white rounded-xl shadow-sm p-6">
+                    <h3 className="text-base font-semibold mb-4">Encrypted File Size Distribution</h3>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <BarChart data={analytics.encryption.fileSizeDistribution}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip />
+                        <Bar dataKey="count" name="Files" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}

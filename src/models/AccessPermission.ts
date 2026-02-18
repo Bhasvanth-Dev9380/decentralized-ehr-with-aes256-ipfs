@@ -6,6 +6,7 @@ export interface IAccessPermission extends Document {
   granted: boolean;
   grantedAt: Date;
   revokedAt?: Date;
+  reEncryptionKey?: string;
 }
 
 const AccessPermissionSchema = new Schema<IAccessPermission>(
@@ -15,6 +16,8 @@ const AccessPermissionSchema = new Schema<IAccessPermission>(
     granted: { type: Boolean, default: true },
     grantedAt: { type: Date, default: Date.now },
     revokedAt: { type: Date },
+    // Proxy Re-Encryption: transformation token for this patient→doctor delegation
+    reEncryptionKey: { type: String, default: "" },
   },
   { timestamps: true }
 );

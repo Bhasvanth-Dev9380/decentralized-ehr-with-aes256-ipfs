@@ -42,6 +42,7 @@ interface Permission {
   granted: boolean;
   grantedAt: string;
   revokedAt?: string;
+  preEnabled?: boolean;
 }
 
 interface Doctor {
@@ -354,6 +355,11 @@ export default function PatientDashboard() {
                         >
                           {p.granted ? "Granted" : "Revoked"}
                         </span>
+                        {p.preEnabled && (
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                            PRE
+                          </span>
+                        )}
                         <button
                           onClick={() =>
                             handleGrantAccess(p.doctorId, !p.granted)

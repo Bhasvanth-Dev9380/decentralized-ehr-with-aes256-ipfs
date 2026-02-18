@@ -311,7 +311,7 @@ export default function DoctorDashboard() {
                               className="inline mr-1"
                               size={10}
                             />
-                            AES-256 Encrypted &bull; IPFS:{" "}
+                            AES-256 + Proxy Re-Encryption &bull; IPFS:{" "}
                             {record.ipfsHash.slice(0, 20)}...
                           </div>
                         </div>
@@ -323,8 +323,8 @@ export default function DoctorDashboard() {
                       >
                         <FiDownload size={14} />
                         {downloadingId === record._id
-                          ? "Decrypting..."
-                          : "Download & Decrypt"}
+                          ? "PRE Decrypting..."
+                          : "Download & PRE-Decrypt"}
                       </button>
                     </div>
                   ))}
@@ -338,11 +338,12 @@ export default function DoctorDashboard() {
         {authorized === null && (
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center text-blue-700">
             <FiLock className="mx-auto mb-3" size={32} />
-            <h3 className="font-semibold mb-1">Secure Record Access</h3>
+            <h3 className="font-semibold mb-1">Secure Record Access (PRE)</h3>
             <p className="text-sm">
               Search for a patient by their ID. Access will be verified through
-              BigchainDB. Files are AES-256 encrypted and stored on IPFS via
-              Pinata — they will be decrypted upon authorized download.
+              BigchainDB. Files use AES-256 encryption with Proxy Re-Encryption &mdash;
+              the server re-encrypts the encrypted key for your RSA keypair,
+              allowing secure decryption without exposing the original key.
             </p>
           </div>
         )}

@@ -10,6 +10,8 @@ export interface IMedicalRecord extends Document {
   uploadedBy: string;
   fileSize: number;
   mimeType: string;
+  encryptedAesKey: string;
+  encryptionType: "PRE" | "LEGACY";
   createdAt: Date;
 }
 
@@ -24,6 +26,9 @@ const MedicalRecordSchema = new Schema<IMedicalRecord>(
     uploadedBy: { type: String, required: true },
     fileSize: { type: Number, required: true },
     mimeType: { type: String, required: true },
+    // Proxy Re-Encryption: AES key encapsulated with patient's RSA public key
+    encryptedAesKey: { type: String, default: "" },   // Base64-encoded RSA capsule
+    encryptionType: { type: String, enum: ["PRE", "LEGACY"], default: "LEGACY" },
   },
   { timestamps: true }
 );
