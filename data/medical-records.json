@@ -1,0 +1,18 @@
+[
+  {
+    "_id": "44b39d0bd729e173c8c2398a",
+    "patientId": "PAT100001",
+    "patientName": "Jane Doe",
+    "fileName": "encrypted_REPORT (3) (1).pdf",
+    "originalName": "REPORT (3) (1).pdf",
+    "ipfsHash": "bafybeiew6nsd2vd6capa4f7yg7psiztn3w5focjhnzckd7guhh4ad2lrwe",
+    "bigchainTxId": "4ce7bb19abada2dc574bc835f673b9ba3b16ab4a73a6bfc9fef7381995889d3c",
+    "uploadedBy": "Admin Receptionist",
+    "fileSize": 395750,
+    "mimeType": "application/pdf",
+    "encryptedAesKey": "gDTa0HaeFvsOHgkaSeupis0DjhKImhvdpupZ3aIR4+w+GmQ5mcAMMI87SBXbqkkxVwGl/ZcIyXmHC/XO54WAUd8nO5D2XyjcspQzSw88DO7TlJsbtb9NynjWpbr/tDjKhNJWAuvYwY1wgEaFsYdEPGSffzkZQoj4tTffiwxZKCpg4rSaiAP4Jw7L21g0Y4meYmH6GYWu6oGDIFnVYlA12UQ5xrLUNKeWcpImJ7lBm4yWvuOGWMsk47ZAvvqCOBA019sydXOnPOnly3S2l634/4qgRhSSN8EPd9PhP39oS3zwrLsWDspJhub1ZOphzi6mzk96Pbo2yaHi1EbN275v8g==",
+    "encryptionType": "PRE",
+    "createdAt": "2026-02-18T17:12:00.861Z",
+    "updatedAt": "2026-02-18T17:12:00.861Z"
+  }
+]

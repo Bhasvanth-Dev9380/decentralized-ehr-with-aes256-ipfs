@@ -1,28 +1,15 @@
-import mongoose, { Schema, Document } from "mongoose";
+import { JsonCollection } from "@/lib/jsonStore";
 
-export interface IAccessPermission extends Document {
+export interface IAccessPermission {
+  _id: string;
   patientId: string;
   doctorId: string;
   granted: boolean;
-  grantedAt: Date;
-  revokedAt?: Date;
+  grantedAt: string;
+  revokedAt?: string;
   reEncryptionKey?: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
-const AccessPermissionSchema = new Schema<IAccessPermission>(
-  {
-    patientId: { type: String, required: true },
-    doctorId: { type: String, required: true },
-    granted: { type: Boolean, default: true },
-    grantedAt: { type: Date, default: Date.now },
-    revokedAt: { type: Date },
-    // Proxy Re-Encryption: transformation token for this patient→doctor delegation
-    reEncryptionKey: { type: String, default: "" },
-  },
-  { timestamps: true }
-);
-
-AccessPermissionSchema.index({ patientId: 1, doctorId: 1 }, { unique: true });
-
-export default mongoose.models.AccessPermission ||
-  mongoose.model<IAccessPermission>("AccessPermission", AccessPermissionSchema);
+export default new JsonCollection("access-permissions");

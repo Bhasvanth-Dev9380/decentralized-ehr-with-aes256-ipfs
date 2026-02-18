@@ -97,7 +97,7 @@ export async function GET(req: NextRequest) {
 
     // Enrich with doctor names
     const enriched = await Promise.all(
-      permissions.map(async (p) => {
+      permissions.map(async (p: any) => {
         const doctor = await User.findOne({ doctorId: p.doctorId }).select("name specialization publicKey");
         return {
           doctorId: p.doctorId,

@@ -145,7 +145,7 @@ export async function GET(req: NextRequest) {
       "100MB+": "100MB+",
     };
 
-    const fileSizeData = sizeDistribution.map((b) => ({
+    const fileSizeData = sizeDistribution.map((b: any) => ({
       name: sizeLabels[String(b._id)] || String(b._id),
       count: b.count,
     }));

@@ -1,27 +1,16 @@
-import mongoose, { Schema, Document } from "mongoose";
+import { JsonCollection } from "@/lib/jsonStore";
 
-export interface IAccessLog extends Document {
+export interface IAccessLog {
+  _id: string;
   patientId: string;
   doctorId: string;
   doctorName: string;
   fileName: string;
   ipfsHash: string;
   accessGranted: boolean;
-  timestamp: Date;
+  timestamp: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
-const AccessLogSchema = new Schema<IAccessLog>(
-  {
-    patientId: { type: String, required: true, index: true },
-    doctorId: { type: String, required: true },
-    doctorName: { type: String, required: true },
-    fileName: { type: String, required: true },
-    ipfsHash: { type: String, required: true },
-    accessGranted: { type: Boolean, required: true },
-    timestamp: { type: Date, default: Date.now },
-  },
-  { timestamps: true }
-);
-
-export default mongoose.models.AccessLog ||
-  mongoose.model<IAccessLog>("AccessLog", AccessLogSchema);
+export default new JsonCollection("access-logs");

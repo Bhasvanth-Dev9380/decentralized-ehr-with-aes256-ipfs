@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     const logs = await AccessLog.find({ patientId: patient.patientId })
       .sort({ timestamp: -1 });
 
-    const formattedLogs = logs.map((log) => ({
+    const formattedLogs = logs.map((log: any) => ({
       id: log._id.toString(),
       doctorId: log.doctorId,
       doctorName: log.doctorName,

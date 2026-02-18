@@ -1,0 +1,14 @@
+[
+  {
+    "_id": "315d3f22d821c0622ace3f90",
+    "patientId": "PAT100001",
+    "doctorId": "DOC100001",
+    "doctorName": "Dr. John Smith",
+    "fileName": "REPORT (3) (1).pdf",
+    "ipfsHash": "bafybeiew6nsd2vd6capa4f7yg7psiztn3w5focjhnzckd7guhh4ad2lrwe",
+    "accessGranted": true,
+    "timestamp": "2026-02-18T17:14:44.046Z",
+    "createdAt": "2026-02-18T17:14:44.047Z",
+    "updatedAt": "2026-02-18T17:14:44.047Z"
+  }
+]
